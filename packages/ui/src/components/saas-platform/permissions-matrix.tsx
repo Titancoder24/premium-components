@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  ChevronRight,
+  Save,
+  Undo2,
+  Info,
   Check,
-  X,
-  Shield,
-  ChevronDown,
-  Lock,
-  Minus,
+  Users,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -31,97 +31,200 @@ export interface PermissionGroup {
 export interface Role {
   id: string;
   name: string;
-  description?: string;
-  color?: string;
+  memberCount?: number;
 }
-
-export type PermissionValue = 'granted' | 'denied' | 'inherited';
 
 export interface PermissionsMatrixProps {
   roles: Role[];
   permissionGroups: PermissionGroup[];
-  values: Record<string, Record<string, PermissionValue>>;
-  onChange?: (roleId: string, permissionId: string, value: PermissionValue) => void;
-  readOnly?: boolean;
+  /** Initial mapping of roleId -> array of permissionIds */
+  initialValues?: Record<string, string[]>;
+  onToggle?: (roleId: string, permissionId: string, enabled: boolean) => void;
+  onSave: (values: Record<string, string[]>) => void;
   className?: string;
 }
 
 // ---------------------------------------------------------------------------
-// Permission Cell
+// Toggle Cell
 // ---------------------------------------------------------------------------
 
-function PermissionCell({
-  value,
-  onChange,
-  readOnly,
+function ToggleCell({
+  enabled,
+  onToggle,
+  highlighted,
 }: {
-  value: PermissionValue;
-  onChange?: (v: PermissionValue) => void;
-  readOnly?: boolean;
+  enabled: boolean;
+  onToggle: () => void;
+  highlighted: boolean;
 }) {
-  const cycle = () => {
-    if (readOnly || !onChange) return;
-    const next: PermissionValue =
-      value === 'granted' ? 'denied' : value === 'denied' ? 'inherited' : 'granted';
-    onChange(next);
-  };
-
   return (
-    <motion.button
-      type="button"
-      disabled={readOnly}
-      onClick={cycle}
-      whileHover={readOnly ? {} : { scale: 1.15 }}
-      whileTap={readOnly ? {} : { scale: 0.9 }}
+    <td
       className={cn(
-        'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-        value === 'granted'
-          ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'
-          : value === 'denied'
-            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-            : 'bg-muted text-muted-foreground',
-        !readOnly && 'cursor-pointer hover:ring-2 hover:ring-primary/30',
+        'relative px-3 py-2 text-center transition-colors',
+        highlighted && 'bg-primary/5 dark:bg-primary/10',
       )}
     >
-      <AnimatePresence mode="wait">
-        {value === 'granted' ? (
-          <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }}>
-            <Check className="h-4 w-4" />
-          </motion.div>
-        ) : value === 'denied' ? (
-          <motion.div key="x" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }}>
-            <X className="h-4 w-4" />
-          </motion.div>
-        ) : (
-          <motion.div key="inherit" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }}>
-            <Minus className="h-4 w-4" />
-          </motion.div>
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={onToggle}
+        className={cn(
+          'inline-flex h-6 w-6 items-center justify-center rounded-md border-2 transition-colors',
+          enabled
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-border bg-transparent hover:border-muted-foreground/50',
         )}
-      </AnimatePresence>
-    </motion.button>
+      >
+        <AnimatePresence mode="wait">
+          {enabled && (
+            <motion.div
+              key="check"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    </td>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Tooltip
+// ---------------------------------------------------------------------------
+
+function DescriptionTooltip({ text }: { text: string }) {
+  const [show, setShow] = React.useState(false);
+
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <Info className="h-3 w-3 cursor-help text-muted-foreground/60" />
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 z-30 mb-2 w-48 -translate-x-1/2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground shadow-lg"
+          >
+            {text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PermissionsMatrix
 // ---------------------------------------------------------------------------
 
 export function PermissionsMatrix({
   roles,
   permissionGroups,
-  values,
-  onChange,
-  readOnly = false,
+  initialValues,
+  onToggle,
+  onSave,
   className,
 }: PermissionsMatrixProps) {
-  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(
-    () => new Set(permissionGroups.map((g) => g.id)),
+  // Build initial state: roleId -> Set<permissionId>
+  const buildStateFromValues = React.useCallback(
+    (vals?: Record<string, string[]>) => {
+      const state: Record<string, Set<string>> = {};
+      for (const role of roles) {
+        state[role.id] = new Set(vals?.[role.id] ?? []);
+      }
+      return state;
+    },
+    [roles],
   );
-  const [hoveredRole, setHoveredRole] = React.useState<string | null>(null);
-  const [hoveredPerm, setHoveredPerm] = React.useState<string | null>(null);
+
+  const [values, setValues] = React.useState(() =>
+    buildStateFromValues(initialValues),
+  );
+  const [savedValues, setSavedValues] = React.useState(() =>
+    buildStateFromValues(initialValues),
+  );
+  const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(
+    new Set(),
+  );
+  const [hoveredRow, setHoveredRow] = React.useState<string | null>(null);
+  const [hoveredCol, setHoveredCol] = React.useState<string | null>(null);
+
+  // Track unsaved changes
+  const hasChanges = React.useMemo(() => {
+    for (const role of roles) {
+      const current = values[role.id] ?? new Set();
+      const saved = savedValues[role.id] ?? new Set();
+      if (current.size !== saved.size) return true;
+      for (const id of current) {
+        if (!saved.has(id)) return true;
+      }
+    }
+    return false;
+  }, [values, savedValues, roles]);
+
+  const handleToggle = (roleId: string, permissionId: string) => {
+    setValues((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[roleId] ?? []);
+      const enabled = !set.has(permissionId);
+      if (enabled) {
+        set.add(permissionId);
+      } else {
+        set.delete(permissionId);
+      }
+      next[roleId] = set;
+      onToggle?.(roleId, permissionId, enabled);
+      return next;
+    });
+  };
+
+  const handleBulkToggle = (roleId: string) => {
+    const allPermIds = permissionGroups.flatMap((g) =>
+      g.permissions.map((p) => p.id),
+    );
+    const current = values[roleId] ?? new Set();
+    const allEnabled = allPermIds.every((id) => current.has(id));
+
+    setValues((prev) => {
+      const next = { ...prev };
+      if (allEnabled) {
+        next[roleId] = new Set();
+      } else {
+        next[roleId] = new Set(allPermIds);
+      }
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    const result: Record<string, string[]> = {};
+    for (const role of roles) {
+      result[role.id] = Array.from(values[role.id] ?? []);
+    }
+    onSave(result);
+    setSavedValues({ ...values });
+  };
+
+  const handleDiscard = () => {
+    setValues(buildStateFromValues(
+      Object.fromEntries(
+        Object.entries(savedValues).map(([k, v]) => [k, Array.from(v)]),
+      ),
+    ));
+  };
 
   const toggleGroup = (groupId: string) => {
-    setExpandedGroups((prev) => {
+    setCollapsedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(groupId)) {
         next.delete(groupId);
@@ -132,155 +235,187 @@ export function PermissionsMatrix({
     });
   };
 
-  const getVal = (roleId: string, permId: string): PermissionValue => {
-    return values[roleId]?.[permId] ?? 'inherited';
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={cn('w-full rounded-xl border border-border bg-card shadow-sm', className)}
+      className={cn('w-full space-y-4', className)}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border p-5">
-        <Shield className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold text-foreground">Permissions</h2>
-        {readOnly && (
-          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            Read-only
-          </span>
-        )}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Permissions</h2>
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 12 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="flex items-center gap-2"
+            >
+              <span className="mr-1 h-2 w-2 rounded-full bg-amber-500" />
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                Unsaved changes
+              </span>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDiscard}
+                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50"
+              >
+                <Undo2 className="h-3 w-3" />
+                Discard
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSave}
+                className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-colors"
+              >
+                <Save className="h-3 w-3" />
+                Save
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 border-b border-border px-5 py-2.5">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-emerald-100 dark:bg-emerald-900/40">
-            <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          Granted
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-red-100 dark:bg-red-900/40">
-            <X className="h-3 w-3 text-red-600 dark:text-red-400" />
-          </div>
-          Denied
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-muted">
-            <Minus className="h-3 w-3" />
-          </div>
-          Inherited
-        </div>
-      </div>
-
-      {/* Matrix */}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          {/* Role headers */}
+      {/* Matrix table */}
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">
+              <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
                 Permission
               </th>
-              {roles.map((role, ri) => (
-                <th
-                  key={role.id}
-                  className="px-3 py-3 text-center"
-                  onMouseEnter={() => setHoveredRole(role.id)}
-                  onMouseLeave={() => setHoveredRole(null)}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: ri * 0.05 }}
+              {roles.map((role) => {
+                const allPermIds = permissionGroups.flatMap((g) =>
+                  g.permissions.map((p) => p.id),
+                );
+                const current = values[role.id] ?? new Set();
+                const allEnabled = allPermIds.every((id) =>
+                  current.has(id),
+                );
+
+                return (
+                  <th
+                    key={role.id}
                     className={cn(
-                      'inline-flex flex-col items-center gap-0.5 transition-opacity',
-                      hoveredRole && hoveredRole !== role.id ? 'opacity-50' : 'opacity-100',
+                      'px-3 py-3 text-center transition-colors',
+                      hoveredCol === role.id && 'bg-primary/5 dark:bg-primary/10',
                     )}
+                    onMouseEnter={() => setHoveredCol(role.id)}
+                    onMouseLeave={() => setHoveredCol(null)}
                   >
-                    <span
-                      className={cn(
-                        'rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                        role.color || 'bg-primary/10 text-primary',
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs font-semibold text-foreground">
+                        {role.name}
+                      </span>
+                      {role.memberCount != null && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                          <Users className="h-2.5 w-2.5" />
+                          {role.memberCount}
+                        </span>
                       )}
-                    >
-                      {role.name}
-                    </span>
-                    {role.description && (
-                      <span className="text-[10px] text-muted-foreground">{role.description}</span>
-                    )}
-                  </motion.div>
-                </th>
-              ))}
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleBulkToggle(role.id)}
+                        className={cn(
+                          'mt-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+                          allEnabled
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-muted text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {allEnabled ? 'Deselect all' : 'Select all'}
+                      </motion.button>
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {permissionGroups.map((group) => {
-              const isExpanded = expandedGroups.has(group.id);
+              const isCollapsed = collapsedGroups.has(group.id);
+
               return (
                 <React.Fragment key={group.id}>
                   {/* Group header */}
-                  <tr>
-                    <td colSpan={roles.length + 1} className="px-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(group.id)}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/50"
-                      >
+                  <tr
+                    className="cursor-pointer border-b border-border bg-muted/30 transition-colors hover:bg-muted/50"
+                    onClick={() => toggleGroup(group.id)}
+                  >
+                    <td
+                      colSpan={roles.length + 1}
+                      className="px-4 py-2"
+                    >
+                      <div className="flex items-center gap-2">
                         <motion.div
-                          animate={{ rotate: isExpanded ? 0 : -90 }}
+                          animate={{ rotate: isCollapsed ? 0 : 90 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                         </motion.div>
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {group.label}
                         </span>
-                      </button>
+                      </div>
                     </td>
                   </tr>
-                  {/* Permissions */}
+
+                  {/* Permission rows */}
                   <AnimatePresence>
-                    {isExpanded &&
+                    {!isCollapsed &&
                       group.permissions.map((perm, pi) => (
                         <motion.tr
                           key={perm.id}
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2, delay: pi * 0.02 }}
+                          transition={{
+                            duration: 0.2,
+                            delay: pi * 0.02,
+                          }}
                           className={cn(
-                            'border-b border-border/50 transition-colors',
-                            hoveredPerm === perm.id && 'bg-muted/30',
+                            'border-b border-border transition-colors last:border-0',
+                            hoveredRow === perm.id && 'bg-muted/20',
                           )}
-                          onMouseEnter={() => setHoveredPerm(perm.id)}
-                          onMouseLeave={() => setHoveredPerm(null)}
+                          onMouseEnter={() => setHoveredRow(perm.id)}
+                          onMouseLeave={() => setHoveredRow(null)}
                         >
-                          <td className="px-5 py-2.5">
-                            <p className="text-sm font-medium text-foreground">{perm.label}</p>
-                            {perm.description && (
-                              <p className="text-xs text-muted-foreground">{perm.description}</p>
-                            )}
-                          </td>
-                          {roles.map((role) => (
-                            <td key={role.id} className="px-3 py-2.5 text-center">
-                              <div className="flex justify-center">
-                                <PermissionCell
-                                  value={getVal(role.id, perm.id)}
-                                  readOnly={readOnly}
-                                  onChange={
-                                    onChange
-                                      ? (v) => onChange(role.id, perm.id, v)
-                                      : undefined
-                                  }
+                          <td className="sticky left-0 z-10 bg-card px-4 py-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm text-foreground">
+                                {perm.label}
+                              </span>
+                              {perm.description && (
+                                <DescriptionTooltip
+                                  text={perm.description}
                                 />
-                              </div>
-                            </td>
-                          ))}
+                              )}
+                            </div>
+                          </td>
+                          {roles.map((role) => {
+                            const enabled = (
+                              values[role.id] ?? new Set()
+                            ).has(perm.id);
+                            const isHighlighted =
+                              hoveredRow === perm.id ||
+                              hoveredCol === role.id;
+
+                            return (
+                              <ToggleCell
+                                key={role.id}
+                                enabled={enabled}
+                                onToggle={() =>
+                                  handleToggle(role.id, perm.id)
+                                }
+                                highlighted={isHighlighted}
+                              />
+                            );
+                          })}
                         </motion.tr>
                       ))}
                   </AnimatePresence>
