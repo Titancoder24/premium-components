@@ -4,7 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Premium UI — MCP-First Component Library',
   description:
-    'Production-grade React component library with 100 premium blocks, 55 themes, Framer Motion animations, and MCP protocol support for AI agents.',
+    'Production-grade React component library with 150 premium blocks, 55 themes, Framer Motion animations, and MCP protocol support for AI agents.',
 }
 
 export default function RootLayout({

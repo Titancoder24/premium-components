@@ -120,6 +120,66 @@ const allComponents = [
   { id: 'error-page', name: 'Error Page', category: 'Utility & System', blocks: 2 },
   { id: 'maintenance-page', name: 'Maintenance Page', category: 'Utility & System', blocks: 1 },
   { id: 'integrations-grid', name: 'Integrations Grid', category: 'Utility & System', blocks: 1 },
+
+  // Developer Tools
+  { id: 'api-key-manager', name: 'API Key Manager', category: 'Developer Tools', blocks: 2, updated: true },
+  { id: 'webhook-tester', name: 'Webhook Tester', category: 'Developer Tools', blocks: 2 },
+  { id: 'environment-variable-editor', name: 'Environment Variable Editor', category: 'Developer Tools', blocks: 2 },
+  { id: 'log-viewer', name: 'Log Viewer', category: 'Developer Tools', blocks: 2 },
+  { id: 'json-inspector', name: 'JSON Inspector', category: 'Developer Tools', blocks: 2 },
+  { id: 'api-playground', name: 'API Playground', category: 'Developer Tools', blocks: 3, updated: true },
+  { id: 'deployment-pipeline', name: 'Deployment Pipeline', category: 'Developer Tools', blocks: 2 },
+  { id: 'schema-visualizer', name: 'Schema Visualizer', category: 'Developer Tools', blocks: 2 },
+  { id: 'code-snippet-block', name: 'Code Snippet Block', category: 'Developer Tools', blocks: 2 },
+  { id: 'feature-flag-panel', name: 'Feature Flag Panel', category: 'Developer Tools', blocks: 2 },
+
+  // SaaS Platform
+  { id: 'subscription-manager', name: 'Subscription Manager', category: 'SaaS Platform', blocks: 3, updated: true },
+  { id: 'usage-billing-dashboard', name: 'Usage Billing Dashboard', category: 'SaaS Platform', blocks: 3 },
+  { id: 'team-management-panel', name: 'Team Management Panel', category: 'SaaS Platform', blocks: 2 },
+  { id: 'audit-log-viewer', name: 'Audit Log Viewer', category: 'SaaS Platform', blocks: 2 },
+  { id: 'permissions-matrix', name: 'Permissions Matrix', category: 'SaaS Platform', blocks: 2 },
+  { id: 'onboarding-checklist', name: 'Onboarding Checklist', category: 'SaaS Platform', blocks: 2 },
+  { id: 'tenant-switcher', name: 'Tenant Switcher', category: 'SaaS Platform', blocks: 1 },
+  { id: 'quota-usage-card', name: 'Quota Usage Card', category: 'SaaS Platform', blocks: 2 },
+  { id: 'customer-health-score', name: 'Customer Health Score', category: 'SaaS Platform', blocks: 2 },
+  { id: 'changelog-timeline', name: 'Changelog Timeline', category: 'SaaS Platform', blocks: 2 },
+
+  // AI Ops
+  { id: 'llm-playground', name: 'LLM Playground', category: 'AI Ops', blocks: 3, updated: true },
+  { id: 'prompt-template-editor', name: 'Prompt Template Editor', category: 'AI Ops', blocks: 2 },
+  { id: 'evaluation-results-table', name: 'Evaluation Results Table', category: 'AI Ops', blocks: 2 },
+  { id: 'vector-search-explorer', name: 'Vector Search Explorer', category: 'AI Ops', blocks: 2 },
+  { id: 'agent-workflow-builder', name: 'Agent Workflow Builder', category: 'AI Ops', blocks: 3, updated: true },
+  { id: 'model-comparison-card', name: 'Model Comparison Card', category: 'AI Ops', blocks: 2 },
+  { id: 'cost-tracker-dashboard', name: 'Cost Tracker Dashboard', category: 'AI Ops', blocks: 2 },
+  { id: 'annotation-labeling-tool', name: 'Annotation Labeling Tool', category: 'AI Ops', blocks: 2 },
+  { id: 'guardrail-config-panel', name: 'Guardrail Config Panel', category: 'AI Ops', blocks: 2 },
+  { id: 'dataset-browser', name: 'Dataset Browser', category: 'AI Ops', blocks: 2 },
+
+  // Internal Tools
+  { id: 'crud-resource-panel', name: 'CRUD Resource Panel', category: 'Internal Tools', blocks: 3, updated: true },
+  { id: 'approval-workflow', name: 'Approval Workflow', category: 'Internal Tools', blocks: 2 },
+  { id: 'bulk-action-toolbar', name: 'Bulk Action Toolbar', category: 'Internal Tools', blocks: 1 },
+  { id: 'report-builder', name: 'Report Builder', category: 'Internal Tools', blocks: 2 },
+  { id: 'notification-center', name: 'Notification Center', category: 'Internal Tools', blocks: 2 },
+  { id: 'system-status-dashboard', name: 'System Status Dashboard', category: 'Internal Tools', blocks: 2 },
+  { id: 'import-export-wizard', name: 'Import/Export Wizard', category: 'Internal Tools', blocks: 3 },
+  { id: 'role-based-nav-shell', name: 'Role-Based Nav Shell', category: 'Internal Tools', blocks: 2 },
+  { id: 'task-queue-monitor', name: 'Task Queue Monitor', category: 'Internal Tools', blocks: 2 },
+  { id: 'configuration-panel', name: 'Configuration Panel', category: 'Internal Tools', blocks: 2 },
+
+  // CLI & Web Terminal
+  { id: 'terminal-emulator', name: 'Terminal Emulator', category: 'CLI & Web Terminal', blocks: 2, updated: true },
+  { id: 'cli-output-renderer', name: 'CLI Output Renderer', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'mcp-server-status', name: 'MCP Server Status', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'agent-chat-terminal', name: 'Agent Chat Terminal', category: 'CLI & Web Terminal', blocks: 2, updated: true },
+  { id: 'pipeline-log-stream', name: 'Pipeline Log Stream', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'command-builder-form', name: 'Command Builder Form', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'diff-viewer', name: 'Diff Viewer', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'ssh-connection-manager', name: 'SSH Connection Manager', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'cron-schedule-editor', name: 'Cron Schedule Editor', category: 'CLI & Web Terminal', blocks: 2 },
+  { id: 'webhook-event-log', name: 'Webhook Event Log', category: 'CLI & Web Terminal', blocks: 2 },
 ]
 
 export default function ComponentsPage() {
@@ -130,7 +190,7 @@ export default function ComponentsPage() {
       <div className="mb-12">
         <p className="mb-2 text-sm font-medium text-primary">All Components</p>
         <h1 className="mb-4 text-3xl font-semibold tracking-tight">
-          100 Premium Blocks
+          150 Premium Blocks
         </h1>
         <p className="max-w-2xl text-muted-foreground">
           Browse all components organized by category. Each block includes

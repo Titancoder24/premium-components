@@ -59,6 +59,36 @@ const categories = [
     count: 12,
     href: '/components/utility',
   },
+  {
+    title: 'Developer Tools',
+    description: 'API key management, webhook testing, log viewers, JSON inspector, and CI/CD pipelines',
+    count: 10,
+    href: '/components/developer-tools',
+  },
+  {
+    title: 'SaaS Platform',
+    description: 'Subscription management, billing dashboards, team management, permissions, and audit logs',
+    count: 10,
+    href: '/components/saas-platform',
+  },
+  {
+    title: 'AI Ops',
+    description: 'LLM playgrounds, prompt editors, evaluation tables, vector search, and agent workflow builders',
+    count: 10,
+    href: '/components/ai-ops',
+  },
+  {
+    title: 'Internal Tools',
+    description: 'CRUD panels, approval workflows, report builders, notification centers, and system status',
+    count: 10,
+    href: '/components/internal-tools',
+  },
+  {
+    title: 'CLI & Web Terminal',
+    description: 'Terminal emulators, diff viewers, MCP server status, agent chat terminals, and cron editors',
+    count: 10,
+    href: '/components/cli-web',
+  },
 ]
 
 export default function HomePage() {
@@ -75,7 +105,7 @@ export default function HomePage() {
         <p className="max-w-2xl text-lg text-muted-foreground">
           Premium UI Blocks are based on real-world situations. Find inspiration
           for your next dashboard by using our carefully crafted blocks.
-          100 components, 55 themes, full MCP protocol support.
+          150 components, 55 themes, full MCP protocol support.
         </p>
       </div>
 
@@ -150,50 +180,53 @@ export default function HomePage() {
       <footer className="mt-20 border-t border-border pt-8">
         <div className="grid gap-8 text-sm sm:grid-cols-5">
           <div>
-            <h4 className="mb-3 font-semibold text-foreground">Charts & Helpers</h4>
+            <h4 className="mb-3 font-semibold text-foreground">Charts & Analytics</h4>
             <ul className="space-y-2 text-muted-foreground">
               <li>Area Charts</li>
-              <li>Line Charts</li>
               <li>Bar Charts</li>
               <li>Donut Charts</li>
-              <li>Chart Tooltips</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-3 font-semibold text-foreground">Advanced Visualizations</h4>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>Bar Lists</li>
-              <li>Status Monitoring</li>
-              <li>Spark Charts</li>
               <li>KPI Cards</li>
-              <li>Chart Compositions</li>
+              <li>Spark Charts</li>
             </ul>
           </div>
           <div>
-            <h4 className="mb-3 font-semibold text-foreground">Inputs & Forms</h4>
+            <h4 className="mb-3 font-semibold text-foreground">Developer Tools</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li>Standard Forms</li>
-              <li>File Uploads</li>
+              <li>API Playground</li>
+              <li>Log Viewer</li>
+              <li>JSON Inspector</li>
+              <li>Deployment Pipeline</li>
+              <li>Feature Flags</li>
             </ul>
           </div>
           <div>
-            <h4 className="mb-3 font-semibold text-foreground">Tables</h4>
+            <h4 className="mb-3 font-semibold text-foreground">AI & LLM Ops</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li>Standard Tables</li>
-              <li>Table Actions</li>
-              <li>Table Pagination</li>
+              <li>LLM Playground</li>
+              <li>Prompt Editor</li>
+              <li>Agent Workflow</li>
+              <li>Vector Search</li>
+              <li>Cost Tracker</li>
             </ul>
           </div>
           <div>
-            <h4 className="mb-3 font-semibold text-foreground">Layout & Forms</h4>
+            <h4 className="mb-3 font-semibold text-foreground">SaaS & Internal</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li>Page Shells</li>
-              <li>Filterbar</li>
-              <li>Empty States</li>
-              <li>Dialogs</li>
-              <li>Grid Lists</li>
-              <li>Banner</li>
-              <li>Badges</li>
+              <li>Subscription Manager</li>
+              <li>Team Management</li>
+              <li>Permissions Matrix</li>
+              <li>CRUD Panels</li>
+              <li>Approval Workflows</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground">CLI & Terminal</h4>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>Terminal Emulator</li>
+              <li>Diff Viewer</li>
+              <li>MCP Server Status</li>
+              <li>Agent Chat</li>
+              <li>Cron Editor</li>
             </ul>
           </div>
         </div>
