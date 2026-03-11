@@ -3,19 +3,16 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield,
-  User,
-  Settings,
-  FileText,
-  Trash2,
-  Plus,
-  Edit,
-  Eye,
-  Search,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
+  Download,
   Filter,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Eye,
+  Edit,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -23,26 +20,30 @@ import { cn } from '../../lib/utils';
 // Types
 // ---------------------------------------------------------------------------
 
+export type AuditActionType = 'create' | 'update' | 'delete' | 'access';
+
 export interface AuditEntry {
   id: string;
-  action: string;
-  category: 'auth' | 'user' | 'settings' | 'data' | 'billing' | 'security';
   actor: {
     name: string;
     email: string;
     avatarUrl?: string;
   };
-  target?: string;
+  action: AuditActionType;
+  target: string;
+  description?: string;
   timestamp: string;
+  ip?: string;
+  userAgent?: string;
   metadata?: Record<string, string>;
-  severity?: 'info' | 'warning' | 'critical';
 }
 
 export interface AuditLogViewerProps {
   entries: AuditEntry[];
   onLoadMore?: () => void;
+  hasMore?: boolean;
+  loading?: boolean;
   onExport?: () => void;
-  pageSize?: number;
   className?: string;
 }
 
@@ -50,207 +51,250 @@ export interface AuditLogViewerProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  auth: <Shield className="h-3.5 w-3.5" />,
-  user: <User className="h-3.5 w-3.5" />,
-  settings: <Settings className="h-3.5 w-3.5" />,
-  data: <FileText className="h-3.5 w-3.5" />,
-  billing: <FileText className="h-3.5 w-3.5" />,
-  security: <Shield className="h-3.5 w-3.5" />,
-};
-
-const severityColors: Record<string, string> = {
-  info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  critical: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-};
-
-function formatTimestamp(ts: string): string {
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function relativeTime(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+function relativeTime(timestamp: string): string {
+  const now = Date.now();
+  const then = new Date(timestamp).getTime();
+  const diff = now - then;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+
+  if (seconds < 60) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 30) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString();
 }
+
+const actionConfig: Record<
+  AuditActionType,
+  { color: string; bgColor: string; icon: React.ElementType }
+> = {
+  create: {
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    icon: Plus,
+  },
+  update: {
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    icon: Edit,
+  },
+  delete: {
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-500/10',
+    icon: Trash2,
+  },
+  access: {
+    color: 'text-gray-600 dark:text-gray-400',
+    bgColor: 'bg-gray-500/10',
+    icon: Eye,
+  },
+};
 
 // ---------------------------------------------------------------------------
-// Component
+// AuditLogViewer
 // ---------------------------------------------------------------------------
 
 export function AuditLogViewer({
   entries,
   onLoadMore,
+  hasMore,
+  loading,
   onExport,
-  pageSize = 10,
   className,
 }: AuditLogViewerProps) {
-  const [query, setQuery] = React.useState('');
-  const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-  const [page, setPage] = React.useState(0);
-  const [filterOpen, setFilterOpen] = React.useState(false);
+  const [filterAction, setFilterAction] = React.useState<
+    AuditActionType | 'all'
+  >('all');
+  const [filterActor, setFilterActor] = React.useState('');
+  const [showFilters, setShowFilters] = React.useState(false);
 
-  const filtered = entries.filter((e) => {
-    const matchesQuery =
-      !query ||
-      e.action.toLowerCase().includes(query.toLowerCase()) ||
-      e.actor.name.toLowerCase().includes(query.toLowerCase()) ||
-      e.actor.email.toLowerCase().includes(query.toLowerCase());
-    const matchesCategory = !categoryFilter || e.category === categoryFilter;
-    return matchesQuery && matchesCategory;
+  const filteredEntries = entries.filter((entry) => {
+    if (filterAction !== 'all' && entry.action !== filterAction) return false;
+    if (
+      filterActor &&
+      !entry.actor.name.toLowerCase().includes(filterActor.toLowerCase()) &&
+      !entry.actor.email.toLowerCase().includes(filterActor.toLowerCase())
+    )
+      return false;
+    return true;
   });
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice(page * pageSize, (page + 1) * pageSize);
-
-  const categories = Array.from(new Set(entries.map((e) => e.category)));
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={cn('w-full rounded-xl border border-border bg-card shadow-sm', className)}
+      className={cn('w-full space-y-4', className)}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Audit Log</h2>
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">Audit Log</h2>
-        </div>
-        {onExport && (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onExport}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            Export
-          </motion.button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-3 border-b border-border px-5 py-3">
-        <div className="flex flex-1 items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setPage(0); }}
-            placeholder="Search audit logs..."
-            className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-        <div className="relative">
-          <button
-            onClick={() => setFilterOpen((o) => !o)}
+            onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-              categoryFilter
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:bg-muted/50',
+              'flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/50',
+              showFilters
+                ? 'bg-muted/50 text-foreground'
+                : 'text-muted-foreground',
             )}
           >
             <Filter className="h-3.5 w-3.5" />
-            {categoryFilter ? categoryFilter : 'Filter'}
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          <AnimatePresence>
-            {filterOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
-              >
-                <button
-                  onClick={() => { setCategoryFilter(null); setFilterOpen(false); setPage(0); }}
-                  className={cn(
-                    'flex w-full items-center px-3 py-2 text-xs transition-colors hover:bg-muted/50',
-                    !categoryFilter ? 'font-medium text-primary' : 'text-foreground',
-                  )}
-                >
-                  All categories
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => { setCategoryFilter(cat); setFilterOpen(false); setPage(0); }}
-                    className={cn(
-                      'flex w-full items-center gap-2 px-3 py-2 text-xs capitalize transition-colors hover:bg-muted/50',
-                      categoryFilter === cat ? 'font-medium text-primary' : 'text-foreground',
-                    )}
-                  >
-                    {categoryIcons[cat]}
-                    {cat}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            Filters
+          </motion.button>
+          {onExport && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onExport}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export
+            </motion.button>
+          )}
         </div>
       </div>
 
-      {/* Entries */}
-      <div className="divide-y divide-border">
-        <AnimatePresence>
-          {paginated.map((entry, i) => (
+      {/* Filters */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-wrap gap-3 rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Action
+                </label>
+                <select
+                  value={filterAction}
+                  onChange={(e) =>
+                    setFilterAction(e.target.value as AuditActionType | 'all')
+                  }
+                  className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="all">All</option>
+                  <option value="create">Create</option>
+                  <option value="update">Update</option>
+                  <option value="delete">Delete</option>
+                  <option value="access">Access</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Actor
+                </label>
+                <input
+                  type="text"
+                  value={filterActor}
+                  onChange={(e) => setFilterActor(e.target.value)}
+                  placeholder="Name or email"
+                  className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Timeline entries */}
+      <div className="relative space-y-0">
+        {/* Timeline line */}
+        <div className="absolute bottom-0 left-[19px] top-0 w-px bg-border" />
+
+        {filteredEntries.map((entry, i) => {
+          const config = actionConfig[entry.action];
+          const isExpanded = expandedId === entry.id;
+
+          return (
             <motion.div
               key={entry.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, delay: i * 0.03 }}
-              className="px-5 py-3"
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.04 }}
+              className="relative pb-4 pl-12"
             >
-              <button
-                type="button"
-                onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                className="flex w-full items-center gap-3 text-left"
-              >
-                <div className={cn(
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                  entry.severity === 'critical'
-                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                    : entry.severity === 'warning'
-                      ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                      : 'bg-muted text-muted-foreground',
-                )}>
-                  {categoryIcons[entry.category]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{entry.action}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {entry.actor.name} {entry.target && <span>&middot; {entry.target}</span>}
-                  </p>
-                </div>
-                {entry.severity && entry.severity !== 'info' && (
-                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium capitalize', severityColors[entry.severity])}>
-                    {entry.severity}
-                  </span>
+              {/* Timeline dot */}
+              <div
+                className={cn(
+                  'absolute left-2.5 top-1 flex h-[14px] w-[14px] items-center justify-center rounded-full',
+                  config.bgColor,
                 )}
-                <span className="shrink-0 text-xs text-muted-foreground">{relativeTime(entry.timestamp)}</span>
+              >
+                <div
+                  className={cn('h-2 w-2 rounded-full', {
+                    'bg-emerald-500': entry.action === 'create',
+                    'bg-blue-500': entry.action === 'update',
+                    'bg-red-500': entry.action === 'delete',
+                    'bg-gray-500': entry.action === 'access',
+                  })}
+                />
+              </div>
+
+              {/* Entry card */}
+              <button
+                onClick={() =>
+                  setExpandedId(isExpanded ? null : entry.id)
+                }
+                className="flex w-full items-start gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted/30"
+              >
+                {/* Avatar */}
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                  {entry.actor.avatarUrl ? (
+                    <img
+                      src={entry.actor.avatarUrl}
+                      alt={entry.actor.name}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserCircle className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">{entry.actor.name}</span>{' '}
+                    <span className={cn('font-medium', config.color)}>
+                      {entry.action}d
+                    </span>{' '}
+                    <span className="font-medium">{entry.target}</span>
+                  </p>
+                  {entry.description && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {entry.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Timestamp & expand */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">
+                    {relativeTime(entry.timestamp)}
+                  </span>
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </motion.div>
+                </div>
               </button>
 
-              {/* Expanded details */}
+              {/* Expandable detail */}
               <AnimatePresence>
-                {expandedId === entry.id && (
+                {isExpanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
@@ -258,61 +302,89 @@ export function AuditLogViewer({
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     className="overflow-hidden"
                   >
-                    <div className="ml-11 mt-2 space-y-1.5 rounded-lg bg-muted/30 p-3 text-xs">
-                      <p className="text-muted-foreground">
-                        <span className="font-medium text-foreground">Time:</span>{' '}
-                        {formatTimestamp(entry.timestamp)}
-                      </p>
-                      <p className="text-muted-foreground">
-                        <span className="font-medium text-foreground">Actor:</span>{' '}
-                        {entry.actor.name} ({entry.actor.email})
-                      </p>
-                      <p className="text-muted-foreground">
-                        <span className="font-medium text-foreground">Category:</span>{' '}
-                        <span className="capitalize">{entry.category}</span>
-                      </p>
-                      {entry.metadata && Object.entries(entry.metadata).map(([key, val]) => (
-                        <p key={key} className="text-muted-foreground">
-                          <span className="font-medium text-foreground capitalize">{key}:</span> {val}
+                    <div className="ml-11 mt-1 space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="text-muted-foreground">
+                          Action:{' '}
+                          <span className={cn('font-medium', config.color)}>
+                            {entry.action}
+                          </span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          Time:{' '}
+                          <span className="font-medium text-foreground">
+                            {new Date(entry.timestamp).toLocaleString()}
+                          </span>
+                        </span>
+                      </div>
+                      {entry.ip && (
+                        <p className="text-xs text-muted-foreground">
+                          IP:{' '}
+                          <span className="font-medium text-foreground">
+                            {entry.ip}
+                          </span>
                         </p>
-                      ))}
+                      )}
+                      {entry.userAgent && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          User Agent:{' '}
+                          <span className="font-medium text-foreground">
+                            {entry.userAgent}
+                          </span>
+                        </p>
+                      )}
+                      {entry.metadata &&
+                        Object.entries(entry.metadata).map(([key, val]) => (
+                          <p
+                            key={key}
+                            className="text-xs text-muted-foreground"
+                          >
+                            {key}:{' '}
+                            <span className="font-medium text-foreground">
+                              {val}
+                            </span>
+                          </p>
+                        ))}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
-          ))}
-        </AnimatePresence>
-        {paginated.length === 0 && (
-          <div className="py-8 text-center text-sm text-muted-foreground">No audit entries found</div>
-        )}
+          );
+        })}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-border px-5 py-3">
-        <p className="text-xs text-muted-foreground">
-          {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/50 disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs font-medium text-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={page >= totalPages - 1}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/50 disabled:opacity-40"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+      {/* Empty state */}
+      {filteredEntries.length === 0 && !loading && (
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No audit entries found.
         </div>
-      </div>
+      )}
+
+      {/* Load more */}
+      {hasMore && onLoadMore && (
+        <div className="flex justify-center pt-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onLoadMore}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 disabled:opacity-50"
+          >
+            {loading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                <Loader2 className="h-4 w-4" />
+              </motion.div>
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {loading ? 'Loading...' : 'Load More'}
+          </motion.button>
+        </div>
+      )}
     </motion.div>
   );
 }
