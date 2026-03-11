@@ -9,7 +9,6 @@ import {
   Trash2,
   Plus,
   Shield,
-  ShieldOff,
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -23,7 +22,7 @@ export interface ApiKey {
   name: string;
   key: string;
   createdAt: string;
-  lastUsedAt?: string;
+  lastUsed?: string;
   status: 'active' | 'revoked';
   scopes?: string[];
 }
@@ -42,8 +41,8 @@ export interface ApiKeyManagerProps {
 // ---------------------------------------------------------------------------
 
 function maskKey(key: string): string {
-  if (key.length <= 8) return '****';
-  return `${key.slice(0, 3)}****${key.slice(-4)}`;
+  if (key.length <= 8) return '••••••••';
+  return `${key.slice(0, 3)}${'•'.repeat(8)}${key.slice(-4)}`;
 }
 
 const containerVariants = {
@@ -53,8 +52,13 @@ const containerVariants = {
 
 const rowVariants = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } },
   exit: { opacity: 0, x: -20, transition: { duration: 0.2 } },
+};
+
+const statusColors: Record<ApiKey['status'], string> = {
+  active: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  revoked: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
 };
 
 // ---------------------------------------------------------------------------
@@ -74,33 +78,70 @@ function CopyButton({ value, onCopy }: { value: string; onCopy: (v: string) => v
     <button
       type="button"
       onClick={handleCopy}
-      className="relative inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      aria-label="Copy key"
+      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+      aria-label="Copy API key"
     >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
           <motion.span
             key="check"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0, rotate: 90 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           >
-            <Check className="h-3.5 w-3.5 text-emerald-500" />
+            <Check className="h-4 w-4 text-emerald-500" />
           </motion.span>
         ) : (
           <motion.span
             key="copy"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0, rotate: 90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0, rotate: -90 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           >
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="h-4 w-4" />
           </motion.span>
         )}
       </AnimatePresence>
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RevokeConfirm
+// ---------------------------------------------------------------------------
+
+function RevokeConfirm({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+      className="overflow-hidden"
+    >
+      <div className="flex items-center gap-3 rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 mt-2">
+        <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+        <p className="text-sm text-rose-600 dark:text-rose-400 flex-1">
+          This action cannot be undone. Revoke this key?
+        </p>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="rounded-md bg-rose-500 px-3 py-1 text-xs font-medium text-white hover:bg-rose-600 transition-colors"
+        >
+          Revoke
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -116,10 +157,10 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
   availableScopes = ['read', 'write', 'admin'],
   className,
 }) => {
-  const [showCreateForm, setShowCreateForm] = React.useState(false);
+  const [showCreate, setShowCreate] = React.useState(false);
   const [newName, setNewName] = React.useState('');
   const [selectedScopes, setSelectedScopes] = React.useState<string[]>([]);
-  const [confirmRevokeId, setConfirmRevokeId] = React.useState<string | null>(null);
+  const [revokeConfirmId, setRevokeConfirmId] = React.useState<string | null>(null);
   const [newKeyId, setNewKeyId] = React.useState<string | null>(null);
 
   const handleCreate = () => {
@@ -127,9 +168,10 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
     onCreateKey(newName.trim(), selectedScopes);
     setNewName('');
     setSelectedScopes([]);
-    setShowCreateForm(false);
+    setShowCreate(false);
     if (keys.length > 0) {
-      setNewKeyId(keys[keys.length - 1]?.id ?? null);
+      setNewKeyId(keys[0]?.id ?? null);
+      setTimeout(() => setNewKeyId(null), 2000);
     }
   };
 
@@ -137,11 +179,6 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
     setSelectedScopes((prev) =>
       prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope],
     );
-  };
-
-  const handleRevoke = (id: string) => {
-    onRevokeKey(id);
-    setConfirmRevokeId(null);
   };
 
   return (
@@ -152,74 +189,72 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
       )}
     >
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Key className="h-4 w-4 text-muted-foreground" />
+          <Key className="h-5 w-5 text-muted-foreground" />
           <h3 className="text-sm font-semibold text-foreground">API Keys</h3>
         </div>
         <button
           type="button"
-          onClick={() => setShowCreateForm((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          onClick={() => setShowCreate(!showCreate)}
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-primary,theme(colors.blue.600))] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
         >
           <Plus className="h-3.5 w-3.5" />
           Create Key
         </button>
       </div>
 
-      {/* Create Form */}
+      {/* Create form */}
       <AnimatePresence>
-        {showCreateForm && (
+        {showCreate && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 26 }}
             className="overflow-hidden"
           >
-            <div className="mb-4 rounded-lg border border-border bg-muted/50 p-4 dark:bg-muted/20">
+            <div className="mb-4 rounded-lg border border-border bg-muted/30 p-4 space-y-3">
               <input
                 type="text"
-                placeholder="Key name (e.g., Production API)"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="mb-3 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                placeholder="Key name (e.g. Production API)"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--color-primary,theme(colors.blue.500))]"
               />
-              <div className="mb-3">
-                <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Scopes</span>
-                <div className="flex flex-wrap gap-2">
-                  {availableScopes.map((scope) => (
-                    <button
-                      key={scope}
-                      type="button"
-                      onClick={() => toggleScope(scope)}
-                      className={cn(
-                        'rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
-                        selectedScopes.includes(scope)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80',
-                      )}
-                    >
-                      {scope}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Scopes:</span>
+                {availableScopes.map((scope) => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => toggleScope(scope)}
+                    className={cn(
+                      'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border',
+                      selectedScopes.includes(scope)
+                        ? 'border-[var(--color-primary,theme(colors.blue.500))] bg-[var(--color-primary,theme(colors.blue.500))]/10 text-[var(--color-primary,theme(colors.blue.600))]'
+                        : 'border-border text-muted-foreground hover:border-foreground/30',
+                    )}
+                  >
+                    {scope}
+                  </button>
+                ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(false)}
+                  className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="button"
                   onClick={handleCreate}
                   disabled={!newName.trim()}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                  className="rounded-md bg-[var(--color-primary,theme(colors.blue.600))] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
-                  Generate Key
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Cancel
+                  Create
                 </button>
               </div>
             </div>
@@ -227,8 +262,8 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Key List */}
-      <motion.div
+      {/* Key list */}
+      <motion.ul
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -236,127 +271,86 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
       >
         <AnimatePresence initial={false}>
           {keys.map((apiKey) => (
-            <motion.div
+            <motion.li
               key={apiKey.id}
               variants={rowVariants}
               layout
+              exit="exit"
               className={cn(
-                'group relative rounded-lg border border-border px-4 py-3 transition-colors',
-                apiKey.status === 'revoked' && 'opacity-60',
-                newKeyId === apiKey.id && 'ring-2 ring-primary/40',
+                'relative rounded-lg border border-border p-3 transition-colors',
+                newKeyId === apiKey.id && 'ring-2 ring-[var(--color-primary,theme(colors.blue.500))]/50',
               )}
             >
-              {/* New key pulse */}
               {newKeyId === apiKey.id && (
                 <motion.div
-                  className="absolute inset-0 rounded-lg bg-primary/10"
-                  initial={{ opacity: 0.5 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ duration: 2, ease: 'easeOut' }}
-                  onAnimationComplete={() => setNewKeyId(null)}
+                  className="absolute inset-0 rounded-lg bg-[var(--color-primary,theme(colors.blue.500))]/5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 0.5, 0] }}
+                  transition={{ duration: 1.5, repeat: 1 }}
                 />
               )}
-
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{apiKey.name}</span>
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {apiKey.name}
+                    </span>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                        apiKey.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+                        'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        statusColors[apiKey.status],
                       )}
                     >
-                      {apiKey.status === 'active' ? (
-                        <Shield className="h-2.5 w-2.5" />
-                      ) : (
-                        <ShieldOff className="h-2.5 w-2.5" />
-                      )}
                       {apiKey.status}
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
-                      {maskKey(apiKey.key)}
-                    </code>
+                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                    {maskKey(apiKey.key)}
+                  </p>
+                  <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
                     <span>Created {apiKey.createdAt}</span>
-                    {apiKey.lastUsedAt && <span>Last used {apiKey.lastUsedAt}</span>}
+                    {apiKey.lastUsed && <span>Last used {apiKey.lastUsed}</span>}
                   </div>
-                  {apiKey.scopes && apiKey.scopes.length > 0 && (
-                    <div className="mt-1.5 flex gap-1">
-                      {apiKey.scopes.map((scope) => (
-                        <span
-                          key={scope}
-                          className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                        >
-                          {scope}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                <div className="flex items-center gap-1">
-                  {apiKey.status === 'active' && (
-                    <>
-                      <CopyButton value={apiKey.key} onCopy={onCopyKey} />
-                      <button
-                        type="button"
-                        onClick={() => setConfirmRevokeId(apiKey.id)}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-500"
-                        aria-label="Revoke key"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </>
-                  )}
-                </div>
+                {apiKey.status === 'active' && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <CopyButton value={apiKey.key} onCopy={onCopyKey} />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRevokeConfirmId(revokeConfirmId === apiKey.id ? null : apiKey.id)
+                      }
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-colors"
+                      aria-label="Revoke key"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Revoke Confirmation */}
               <AnimatePresence>
-                {confirmRevokeId === apiKey.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-3 flex items-center gap-3 rounded-md border border-rose-500/20 bg-rose-500/5 px-3 py-2">
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
-                      <span className="flex-1 text-xs text-rose-600 dark:text-rose-400">
-                        This action cannot be undone. Revoke this key?
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRevoke(apiKey.id)}
-                        className="rounded-md bg-rose-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-rose-600"
-                      >
-                        Revoke
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmRevokeId(null)}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </motion.div>
+                {revokeConfirmId === apiKey.id && (
+                  <RevokeConfirm
+                    onConfirm={() => {
+                      onRevokeKey(apiKey.id);
+                      setRevokeConfirmId(null);
+                    }}
+                    onCancel={() => setRevokeConfirmId(null)}
+                  />
                 )}
               </AnimatePresence>
-            </motion.div>
+            </motion.li>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </motion.ul>
 
       {keys.length === 0 && (
-        <div className="py-8 text-center text-sm text-muted-foreground">
+        <p className="py-8 text-center text-sm text-muted-foreground">
           No API keys yet. Create one to get started.
-        </div>
+        </p>
       )}
     </div>
   );
