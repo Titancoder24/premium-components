@@ -52,7 +52,7 @@ const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 function parseCron(expr: string): CronParts | null {
   const parts = expr.trim().split(/\s+/);
   if (parts.length !== 5) return null;
-  return { minute: parts[0], hour: parts[1], dayOfMonth: parts[2], month: parts[3], dayOfWeek: parts[4] };
+  return { minute: parts[0]!, hour: parts[1]!, dayOfMonth: parts[2]!, month: parts[3]!, dayOfWeek: parts[4]! };
 }
 
 function validateCron(expr: string): string | null {
@@ -66,15 +66,16 @@ function validateCron(expr: string): string | null {
     { name: 'Day of week', min: 0, max: 7 },
   ];
   for (let i = 0; i < 5; i++) {
-    const p = parts[i];
+    const p = parts[i]!;
+    const r = ranges[i]!;
     if (p === '*' || /^\*\/\d+$/.test(p)) continue;
     const nums = p.split(',').flatMap((s) => {
       const range = s.split('-');
       return range.map(Number);
     });
     for (const n of nums) {
-      if (isNaN(n) || n < ranges[i].min || n > ranges[i].max) {
-        return `${ranges[i].name}: value ${p} is out of range (${ranges[i].min}-${ranges[i].max})`;
+      if (isNaN(n) || n < r.min || n > r.max) {
+        return `${r.name}: value ${p} is out of range (${r.min}-${r.max})`;
       }
     }
   }
@@ -136,8 +137,8 @@ function matchField(field: string, value: number): boolean {
   const parts = field.split(',');
   for (const p of parts) {
     if (p.includes('-')) {
-      const [a, b] = p.split('-').map(Number);
-      if (value >= a && value <= b) return true;
+      const rangeParts = p.split('-').map(Number);
+      if (value >= (rangeParts[0] ?? 0) && value <= (rangeParts[1] ?? 0)) return true;
     } else if (Number(p) === value) return true;
   }
   return false;

@@ -284,7 +284,7 @@ export const SshConnectionManager: React.FC<SshConnectionManagerProps> = ({
   const [showAdd, setShowAdd] = React.useState(false);
   const [collapsedTags, setCollapsedTags] = React.useState<Set<string>>(new Set());
 
-  const tags = Array.from(new Set(connections.map((c) => c.tag ?? 'Ungrouped')));
+  const tags: string[] = Array.from(new Set(connections.map((c) => c.tag ?? 'Ungrouped')));
   const grouped = tags.map((tag) => ({
     tag,
     items: connections.filter((c) => (c.tag ?? 'Ungrouped') === tag),
