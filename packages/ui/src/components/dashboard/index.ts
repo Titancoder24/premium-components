@@ -1,0 +1,12 @@
+export { KpiStatCard, type KpiStatCardProps, type KpiStatCardVariant } from './kpi-stat-card';
+export { KpiGrid, type KpiGridProps } from './kpi-grid';
+export { RevenueChart, type RevenueChartProps, type RevenueMetric } from './revenue-chart';
+export { BarChartBlock, type BarChartBlockProps, type BarChartDataItem } from './bar-chart-block';
+export { DonutChartBlock, type DonutChartBlockProps, type DonutDataItem } from './donut-chart-block';
+export { ActivityFeed, type ActivityFeedProps, type ActivityItem, type ActivityUser, type ActivityType } from './activity-feed';
+export { MiniSparklineRow, type MiniSparklineRowProps } from './mini-sparkline-row';
+export { MetricComparisonCard, type MetricComparisonCardProps, type ComparisonMetric } from './metric-comparison-card';
+export { GoalProgressCard, type GoalProgressCardProps } from './goal-progress-card';
+export { HeatmapCalendar, type HeatmapCalendarProps, type HeatmapDataItem } from './heatmap-calendar';
+export { RealTimeCounter, type RealTimeCounterProps } from './real-time-counter';
+export { DashboardShell, type DashboardShellProps, type SidebarItem, type DashboardUser } from './dashboard-shell';
