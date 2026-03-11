@@ -1,6 +1,43 @@
-import Link from 'next/link'
+'use client'
 
-const allComponents = [
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import {
+  KpiStatCard,
+  PricingCard,
+  AlertBanner,
+  GoalProgressCard,
+} from '@premiumui/core'
+
+// ─── All components metadata ─────────────────────────────
+interface ComponentMeta {
+  id: string
+  name: string
+  category: string
+  blocks: number
+  updated?: boolean
+  preview?: React.ReactNode
+}
+
+const componentPreviews: Record<string, React.ReactNode> = {
+  'kpi-stat-card': (
+    <KpiStatCard value="$48.2k" label="Revenue" trend={12.5} trendDirection="up" sparklineData={[30,42,38,55,48,62,70]} variant="compact" />
+  ),
+  'pricing-card': (
+    <div className="scale-[0.85] origin-top-left">
+      <PricingCard planName="Pro" price={29} period="monthly" highlighted features={[{text:'All components',included:true},{text:'22 themes',included:true},{text:'Priority support',included:false}]} />
+    </div>
+  ),
+  'alert-banner': (
+    <AlertBanner variant="info" title="Update available" description="New version 2.0 is ready." />
+  ),
+  'goal-progress': (
+    <GoalProgressCard label="Q1 Target" current={73500} target={100000} unit="$" />
+  ),
+}
+
+const allComponents: ComponentMeta[] = [
   // Dashboard & Analytics
   { id: 'kpi-stat-card', name: 'KPI Stat Card', category: 'Dashboard & Analytics', blocks: 3, updated: true },
   { id: 'kpi-grid', name: 'KPI Grid', category: 'Dashboard & Analytics', blocks: 2 },
@@ -124,7 +161,7 @@ const allComponents = [
   // Developer Tools
   { id: 'api-key-manager', name: 'API Key Manager', category: 'Developer Tools', blocks: 2, updated: true },
   { id: 'webhook-tester', name: 'Webhook Tester', category: 'Developer Tools', blocks: 2 },
-  { id: 'environment-variable-editor', name: 'Environment Variable Editor', category: 'Developer Tools', blocks: 2 },
+  { id: 'environment-variable-editor', name: 'Env Variable Editor', category: 'Developer Tools', blocks: 2 },
   { id: 'log-viewer', name: 'Log Viewer', category: 'Developer Tools', blocks: 2 },
   { id: 'json-inspector', name: 'JSON Inspector', category: 'Developer Tools', blocks: 2 },
   { id: 'api-playground', name: 'API Playground', category: 'Developer Tools', blocks: 3, updated: true },
@@ -242,57 +279,207 @@ const allComponents = [
   { id: 'webhook-notification-card', name: 'Webhook Notification Card', category: 'Messaging & Notifications', blocks: 2 },
 ]
 
-export default function ComponentsPage() {
-  const categories = [...new Set(allComponents.map((c) => c.category))]
+// ─── Component card ──────────────────────────────────────
+function ComponentCard({ comp }: { comp: ComponentMeta }) {
+  const preview = componentPreviews[comp.id]
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-16">
-      <div className="mb-12">
-        <p className="mb-2 text-sm font-medium text-primary">All Components</p>
-        <h1 className="mb-4 text-3xl font-semibold tracking-tight">
-          200 Premium Blocks
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Browse all components organized by category. Each block includes
-          Framer Motion animations, full TypeScript types, theme support,
-          and MCP manifest for AI agents.
-        </p>
+    <Link
+      href={`/components/${comp.id}`}
+      className="group relative flex flex-col rounded-xl border border-border/50 bg-card/50 backdrop-blur transition-all duration-200 hover:border-primary/30 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5"
+    >
+      {comp.updated && (
+        <span className="absolute -top-2 left-3 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+          NEW
+        </span>
+      )}
+
+      {/* Preview area */}
+      <div className="relative flex min-h-[140px] items-center justify-center overflow-hidden rounded-t-xl border-b border-border/30 bg-muted/20 p-4">
+        {preview ? (
+          <div className="w-full">{preview}</div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-1">
+              <div className="h-2 w-8 rounded-full bg-muted-foreground/10" />
+              <div className="h-2 w-12 rounded-full bg-muted-foreground/10" />
+              <div className="h-2 w-6 rounded-full bg-muted-foreground/10" />
+            </div>
+            <div className="h-8 w-24 rounded-lg bg-muted-foreground/5 ring-1 ring-muted-foreground/10" />
+            <div className="flex gap-1">
+              <div className="h-1.5 w-10 rounded-full bg-muted-foreground/10" />
+              <div className="h-1.5 w-14 rounded-full bg-muted-foreground/10" />
+            </div>
+          </div>
+        )}
+        {/* Hover overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+          <span className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg">
+            View Component
+          </span>
+        </div>
       </div>
 
-      {categories.map((category) => (
-        <section key={category} className="mb-12">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">
-            {category}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {allComponents
-              .filter((c) => c.category === category)
-              .map((comp) => (
-                <Link
-                  key={comp.id}
-                  href={`/components/${comp.id}`}
-                  className="group relative rounded-lg border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  {comp.updated && (
-                    <span className="absolute -top-2 left-4 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                      UPDATED
-                    </span>
-                  )}
-                  <div className="mb-3 h-24 rounded-md bg-muted" />
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-card-foreground group-hover:text-primary">
-                      {comp.name}
-                    </h3>
-                    <span className="text-xs text-muted-foreground">→</span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {comp.blocks} {comp.blocks === 1 ? 'block' : 'blocks'}
-                  </p>
-                </Link>
-              ))}
+      {/* Info */}
+      <div className="flex flex-1 flex-col justify-between p-4">
+        <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+          {comp.name}
+        </h3>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground">
+            {comp.blocks} {comp.blocks === 1 ? 'variant' : 'variants'}
+          </span>
+          <svg className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// ─── Main page ───────────────────────────────────────────
+export default function ComponentsPage() {
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  const categories = useMemo(
+    () => [...new Set(allComponents.map((c) => c.category))],
+    [],
+  )
+
+  const filtered = useMemo(() => {
+    let result = allComponents
+    if (selectedCategory) {
+      result = result.filter((c) => c.category === selectedCategory)
+    }
+    if (search) {
+      const q = search.toLowerCase()
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.category.toLowerCase().includes(q) ||
+          c.id.includes(q),
+      )
+    }
+    return result
+  }, [search, selectedCategory])
+
+  const groupedByCategory = useMemo(() => {
+    const groups: Record<string, ComponentMeta[]> = {}
+    for (const comp of filtered) {
+      if (!groups[comp.category]) groups[comp.category] = []
+      groups[comp.category].push(comp)
+    }
+    return groups
+  }, [filtered])
+
+  return (
+    <main className="relative">
+      <div className="pointer-events-none absolute inset-0 dot-grid opacity-30" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-12">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground">
+            Components
+          </h1>
+          <p className="text-muted-foreground">
+            {allComponents.length} production-ready blocks across {categories.length} categories.
+          </p>
+        </motion.div>
+
+        {/* Search + Filter */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center"
+        >
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search components..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-border/50 bg-card/50 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 backdrop-blur outline-none transition-all focus:border-primary/30 focus:ring-2 focus:ring-primary/10"
+            />
           </div>
-        </section>
-      ))}
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                !selectedCategory
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'border border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'border border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                }`}
+              >
+                {cat.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Results count */}
+        <div className="mb-6 text-xs text-muted-foreground">
+          Showing {filtered.length} of {allComponents.length} components
+        </div>
+
+        {/* Component grid by category */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedCategory ?? 'all' + search}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {Object.entries(groupedByCategory).map(([category, comps]) => (
+              <section key={category} className="mb-12">
+                <div className="mb-4 flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-foreground">{category}</h2>
+                  <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {comps.length}
+                  </span>
+                  <div className="h-px flex-1 bg-border/30" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {comps.map((comp) => (
+                    <ComponentCard key={comp.id} comp={comp} />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="mb-4 text-4xl opacity-20">&#x2205;</div>
+                <p className="text-lg font-medium text-muted-foreground">No components found</p>
+                <p className="text-sm text-muted-foreground/60">Try a different search term</p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </main>
   )
 }

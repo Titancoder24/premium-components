@@ -38,7 +38,7 @@ const itemVariants = {
 };
 
 export const KpiGrid: React.FC<KpiGridProps> = ({
-  cards,
+  cards = [],
   columns = 'auto',
   loading = false,
   className,
