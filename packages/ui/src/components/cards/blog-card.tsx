@@ -52,7 +52,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({
         className,
       )}
     >
-      <Wrapper {...(wrapperProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)} className="flex flex-col">
+      <Wrapper {...(wrapperProps as any)} className="flex flex-col">
         {/* Image */}
         <div className="relative aspect-[16/9] overflow-hidden">
           <motion.img

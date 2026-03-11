@@ -118,7 +118,7 @@ const TableRenderer: React.FC<{ block: TableBlock }> = ({ block }) => {
   return (
     <div className="overflow-x-auto font-mono text-xs text-zinc-300">
       <div className="text-zinc-100 font-bold">
-        {block.headers.map((h, i) => ` ${pad(h, colWidths[i])} `).join('|')}
+        {block.headers.map((h, i) => ` ${pad(h, colWidths[i]!)} `).join('|')}
       </div>
       <div className="text-zinc-600">{separator}</div>
       {block.rows.map((row, ri) => (
@@ -128,7 +128,7 @@ const TableRenderer: React.FC<{ block: TableBlock }> = ({ block }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: ri * 0.03 }}
         >
-          {row.map((cell, ci) => ` ${pad(cell, colWidths[ci])} `).join('|')}
+          {row.map((cell, ci) => ` ${pad(cell, colWidths[ci]!)} `).join('|')}
         </motion.div>
       ))}
     </div>

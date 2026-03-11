@@ -51,7 +51,7 @@ const typeColors: Record<string, string> = {
 }
 
 function getTypeColor(type: string): string {
-  return typeColors[type] ?? typeColors.default
+  return typeColors[type] ?? typeColors.default!
 }
 
 // ---------------------------------------------------------------------------

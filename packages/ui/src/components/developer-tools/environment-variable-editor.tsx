@@ -145,7 +145,7 @@ export const EnvironmentVariableEditor: React.FC<EnvironmentVariableEditorProps>
     if (fromIndex === -1 || toIndex === -1) return;
     const next = [...localVars];
     const [moved] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, moved);
+    next.splice(toIndex, 0, moved!);
     setLocalVars(next);
   };
 

@@ -100,7 +100,7 @@ function StepIndicator({ current }: { current: WizardStep }) {
 function parseCSV(text: string): { headers: string[]; rows: string[][] } {
   const lines = text.trim().split('\n');
   if (lines.length === 0) return { headers: [], rows: [] };
-  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
+  const headers = lines[0]!.split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
   const rows = lines.slice(1).map((line) =>
     line.split(',').map((cell) => cell.trim().replace(/^"|"$/g, '')),
   );
@@ -135,8 +135,8 @@ export const ImportExportWizard: React.FC<ImportExportWizardProps> = ({
           const data = JSON.parse(text);
           const arr = Array.isArray(data) ? data : [data];
           if (arr.length > 0) {
-            setSourceHeaders(Object.keys(arr[0]));
-            setSourceRows(arr.map((item) => Object.values(item).map(String)));
+            setSourceHeaders(Object.keys(arr[0] as Record<string, unknown>));
+            setSourceRows(arr.map((item) => Object.values(item as Record<string, unknown>).map(String)));
           }
         } catch {
           /* invalid JSON */
@@ -176,7 +176,7 @@ export const ImportExportWizard: React.FC<ImportExportWizardProps> = ({
         const sourceCol = mapping[field.key];
         if (sourceCol) {
           const idx = sourceHeaders.indexOf(sourceCol);
-          record[field.key] = idx >= 0 ? row[idx] : undefined;
+          record[field.key] = idx >= 0 ? row[idx] ?? undefined : undefined;
         }
       });
       return record;
@@ -418,7 +418,7 @@ export const ImportExportWizard: React.FC<ImportExportWizardProps> = ({
           type="button"
           onClick={() => {
             const idx = steps.findIndex((s) => s.key === step);
-            if (idx > 0) setStep(steps[idx - 1].key);
+            if (idx > 0) setStep(steps[idx - 1]!.key);
           }}
           disabled={step === 'upload'}
           className={cn(
@@ -448,7 +448,7 @@ export const ImportExportWizard: React.FC<ImportExportWizardProps> = ({
             type="button"
             onClick={() => {
               const idx = steps.findIndex((s) => s.key === step);
-              if (idx < steps.length - 1) setStep(steps[idx + 1].key);
+              if (idx < steps.length - 1) setStep(steps[idx + 1]!.key);
             }}
             disabled={step === 'upload'}
             className={cn(

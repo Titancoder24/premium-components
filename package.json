@@ -2,6 +2,7 @@
   "name": "premium-components",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "yarn@1.22.22",
   "description": "Premium MCP-First UI Component Library with 50+ Themes",
   "workspaces": [
     "packages/*"
@@ -14,8 +15,9 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "prettier": "^3.2.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.4.0",
-    "prettier": "^3.2.0"
+    "typescript": "^5.4.0"
   }
 }

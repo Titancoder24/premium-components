@@ -49,7 +49,7 @@ function computeLCS(a: string[], b: string[]): boolean[][] {
   const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      dp[i]![j] = a[i - 1] === b[j - 1] ? dp[i - 1]![j - 1]! + 1 : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
     }
   }
   const inA = Array(m).fill(false);
@@ -57,7 +57,7 @@ function computeLCS(a: string[], b: string[]): boolean[][] {
   let i = m, j = n;
   while (i > 0 && j > 0) {
     if (a[i - 1] === b[j - 1]) { inA[i - 1] = true; inB[j - 1] = true; i--; j--; }
-    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else if (dp[i - 1]![j]! >= dp[i]![j - 1]!) i--;
     else j--;
   }
   return [inA, inB];
@@ -74,18 +74,18 @@ function computeDiff(oldText: string, newText: string): { lines: DiffLine[]; add
   let oldLineNum = 1, newLineNum = 1;
 
   while (oi < oldLines.length || ni < newLines.length) {
-    if (oi < oldLines.length && inOld[oi] && ni < newLines.length && inNew[ni]) {
-      result.push({ type: 'unchanged', oldLineNum: oldLineNum++, newLineNum: newLineNum++, content: oldLines[oi] });
+    if (oi < oldLines.length && inOld![oi] && ni < newLines.length && inNew![ni]) {
+      result.push({ type: 'unchanged', oldLineNum: oldLineNum++, newLineNum: newLineNum++, content: oldLines[oi]! });
       oi++; ni++;
-    } else if (oi < oldLines.length && !inOld[oi]) {
-      result.push({ type: 'removed', oldLineNum: oldLineNum++, content: oldLines[oi] });
+    } else if (oi < oldLines.length && !inOld![oi]) {
+      result.push({ type: 'removed', oldLineNum: oldLineNum++, content: oldLines[oi]! });
       removedCount++; oi++;
-    } else if (ni < newLines.length && !inNew[ni]) {
-      result.push({ type: 'added', newLineNum: newLineNum++, content: newLines[ni] });
+    } else if (ni < newLines.length && !inNew![ni]) {
+      result.push({ type: 'added', newLineNum: newLineNum++, content: newLines[ni]! });
       addedCount++; ni++;
     } else {
-      if (oi < oldLines.length) { result.push({ type: 'removed', oldLineNum: oldLineNum++, content: oldLines[oi] }); removedCount++; oi++; }
-      if (ni < newLines.length) { result.push({ type: 'added', newLineNum: newLineNum++, content: newLines[ni] }); addedCount++; ni++; }
+      if (oi < oldLines.length) { result.push({ type: 'removed', oldLineNum: oldLineNum++, content: oldLines[oi]! }); removedCount++; oi++; }
+      if (ni < newLines.length) { result.push({ type: 'added', newLineNum: newLineNum++, content: newLines[ni]! }); addedCount++; ni++; }
     }
   }
   return { lines: result, added: addedCount, removed: removedCount };
@@ -96,10 +96,10 @@ function wordDiff(oldStr: string, newStr: string): { old: React.ReactNode; new: 
   const newWords = newStr.split(/(\s+)/);
   const [inO, inN] = computeLCS(oldWords, newWords);
   const oldNode = oldWords.map((w, i) =>
-    inO[i] ? <span key={i}>{w}</span> : <span key={i} className="bg-red-400/30 dark:bg-red-500/30 rounded-sm">{w}</span>,
+    inO![i] ? <span key={i}>{w}</span> : <span key={i} className="bg-red-400/30 dark:bg-red-500/30 rounded-sm">{w}</span>,
   );
   const newNode = newWords.map((w, i) =>
-    inN[i] ? <span key={i}>{w}</span> : <span key={i} className="bg-emerald-400/30 dark:bg-emerald-500/30 rounded-sm">{w}</span>,
+    inN![i] ? <span key={i}>{w}</span> : <span key={i} className="bg-emerald-400/30 dark:bg-emerald-500/30 rounded-sm">{w}</span>,
   );
   return { old: oldNode, new: newNode };
 }
@@ -141,7 +141,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       ? Math.min(currentChange + 1, changeIndices.length - 1)
       : Math.max(currentChange - 1, 0);
     setCurrentChange(next);
-    changeRefs.current[changeIndices[next]]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    changeRefs.current[changeIndices[next]!]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const lineClasses: Record<DiffLine['type'], string> = {

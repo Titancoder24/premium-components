@@ -164,7 +164,7 @@ export function ReportBuilder({
     setSelected((prev) => {
       const next = [...prev];
       const [item] = next.splice(from, 1);
-      next.splice(to, 0, item);
+      next.splice(to, 0, item!);
       return next;
     });
   };

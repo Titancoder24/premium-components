@@ -31,7 +31,7 @@ const CELL_GAP = 3;
 
 function parseDate(str: string): Date {
   const [y, m, d] = str.split('-').map(Number);
-  return new Date(y, m - 1, d);
+  return new Date(y!, m! - 1, d!);
 }
 
 function formatDateKey(date: Date): string {
@@ -60,12 +60,12 @@ function getColor(
   max: number,
   scale: string[],
 ): string {
-  if (value === 0 || max === 0) return scale[0];
+  if (value === 0 || max === 0) return scale[0]!;
   const idx = Math.min(
     Math.floor((value / max) * (scale.length - 1)) + 1,
     scale.length - 1,
   );
-  return scale[idx];
+  return scale[idx]!;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
     let lastMonth = -1;
 
     weeks.forEach((week, weekIdx) => {
-      const firstDay = week[0];
+      const firstDay = week[0]!;
       const month = firstDay.date.getMonth();
       if (month !== lastMonth) {
         labels.push({

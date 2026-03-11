@@ -43,7 +43,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
         className,
       )}
     >
-      <Wrapper {...(wrapperProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)} className="flex flex-col gap-4">
+      <Wrapper {...(wrapperProps as any)} className="flex flex-col gap-4">
         {/* Icon with float animation */}
         <motion.div
           animate={{ y: [0, -4, 0] }}

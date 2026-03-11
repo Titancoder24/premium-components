@@ -87,7 +87,7 @@ export function SearchInput({
         );
       } else if (e.key === "Enter" && activeIndex >= 0) {
         e.preventDefault();
-        handleSelect(allItems[activeIndex].value);
+        handleSelect(allItems[activeIndex]!.value);
       } else if (e.key === "Escape") {
         setIsFocused(false);
         inputRef.current?.blur();

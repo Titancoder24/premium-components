@@ -180,6 +180,66 @@ const allComponents = [
   { id: 'ssh-connection-manager', name: 'SSH Connection Manager', category: 'CLI & Web Terminal', blocks: 2 },
   { id: 'cron-schedule-editor', name: 'Cron Schedule Editor', category: 'CLI & Web Terminal', blocks: 2 },
   { id: 'webhook-event-log', name: 'Webhook Event Log', category: 'CLI & Web Terminal', blocks: 2 },
+
+  // Collaboration & Social
+  { id: 'comment-thread', name: 'Comment Thread', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'mention-input', name: 'Mention Input', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'presence-indicator', name: 'Presence Indicator', category: 'Collaboration & Social', blocks: 1 },
+  { id: 'shared-cursor', name: 'Shared Cursor', category: 'Collaboration & Social', blocks: 1 },
+  { id: 'reaction-picker', name: 'Reaction Picker', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'activity-timeline', name: 'Activity Timeline', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'invite-link-card', name: 'Invite Link Card', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'voting-poll', name: 'Voting Poll', category: 'Collaboration & Social', blocks: 2 },
+  { id: 'live-badge', name: 'Live Badge', category: 'Collaboration & Social', blocks: 1, updated: true },
+  { id: 'collaborative-editor-toolbar', name: 'Collaborative Editor Toolbar', category: 'Collaboration & Social', blocks: 2 },
+
+  // Media & File Management
+  { id: 'image-cropper', name: 'Image Cropper', category: 'Media & File Management', blocks: 2, updated: true },
+  { id: 'video-player', name: 'Video Player', category: 'Media & File Management', blocks: 3 },
+  { id: 'audio-waveform', name: 'Audio Waveform', category: 'Media & File Management', blocks: 2 },
+  { id: 'file-browser', name: 'File Browser', category: 'Media & File Management', blocks: 2 },
+  { id: 'document-viewer', name: 'Document Viewer', category: 'Media & File Management', blocks: 2 },
+  { id: 'media-grid', name: 'Media Grid', category: 'Media & File Management', blocks: 2 },
+  { id: 'upload-progress-card', name: 'Upload Progress Card', category: 'Media & File Management', blocks: 2 },
+  { id: 'cloud-storage-meter', name: 'Cloud Storage Meter', category: 'Media & File Management', blocks: 2 },
+  { id: 'attachment-chip', name: 'Attachment Chip', category: 'Media & File Management', blocks: 1 },
+  { id: 'screen-recording-card', name: 'Screen Recording Card', category: 'Media & File Management', blocks: 2 },
+
+  // Scheduling & Calendar
+  { id: 'month-calendar', name: 'Month Calendar', category: 'Scheduling & Calendar', blocks: 3 },
+  { id: 'week-planner', name: 'Week Planner', category: 'Scheduling & Calendar', blocks: 3 },
+  { id: 'event-card', name: 'Event Card', category: 'Scheduling & Calendar', blocks: 2 },
+  { id: 'availability-picker', name: 'Availability Picker', category: 'Scheduling & Calendar', blocks: 2 },
+  { id: 'timezone-selector', name: 'Timezone Selector', category: 'Scheduling & Calendar', blocks: 2 },
+  { id: 'countdown-timer', name: 'Countdown Timer', category: 'Scheduling & Calendar', blocks: 2, updated: true },
+  { id: 'booking-confirmation', name: 'Booking Confirmation', category: 'Scheduling & Calendar', blocks: 2 },
+  { id: 'recurring-schedule-editor', name: 'Recurring Schedule Editor', category: 'Scheduling & Calendar', blocks: 2 },
+  { id: 'gantt-row', name: 'Gantt Row', category: 'Scheduling & Calendar', blocks: 1 },
+  { id: 'agenda-list', name: 'Agenda List', category: 'Scheduling & Calendar', blocks: 2 },
+
+  // Maps & Location
+  { id: 'location-picker', name: 'Location Picker', category: 'Maps & Location', blocks: 2, updated: true },
+  { id: 'address-autocomplete', name: 'Address Autocomplete', category: 'Maps & Location', blocks: 2 },
+  { id: 'store-locator-card', name: 'Store Locator Card', category: 'Maps & Location', blocks: 2 },
+  { id: 'route-summary', name: 'Route Summary', category: 'Maps & Location', blocks: 2 },
+  { id: 'geofence-editor', name: 'Geofence Editor', category: 'Maps & Location', blocks: 2 },
+  { id: 'delivery-tracker', name: 'Delivery Tracker', category: 'Maps & Location', blocks: 3 },
+  { id: 'heatmap-overlay', name: 'Heatmap Overlay', category: 'Maps & Location', blocks: 2 },
+  { id: 'coordinates-display', name: 'Coordinates Display', category: 'Maps & Location', blocks: 1 },
+  { id: 'region-selector', name: 'Region Selector', category: 'Maps & Location', blocks: 2 },
+  { id: 'eta-card', name: 'ETA Card', category: 'Maps & Location', blocks: 2 },
+
+  // Messaging & Notifications
+  { id: 'inbox-panel', name: 'Inbox Panel', category: 'Messaging & Notifications', blocks: 3, updated: true },
+  { id: 'push-notification-card', name: 'Push Notification Card', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'email-composer', name: 'Email Composer', category: 'Messaging & Notifications', blocks: 3 },
+  { id: 'sms-preview', name: 'SMS Preview', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'notification-preferences', name: 'Notification Preferences', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'message-status-row', name: 'Message Status Row', category: 'Messaging & Notifications', blocks: 1 },
+  { id: 'broadcast-composer', name: 'Broadcast Composer', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'unread-badge-stack', name: 'Unread Badge Stack', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'digest-summary-card', name: 'Digest Summary Card', category: 'Messaging & Notifications', blocks: 2 },
+  { id: 'webhook-notification-card', name: 'Webhook Notification Card', category: 'Messaging & Notifications', blocks: 2 },
 ]
 
 export default function ComponentsPage() {
@@ -190,7 +250,7 @@ export default function ComponentsPage() {
       <div className="mb-12">
         <p className="mb-2 text-sm font-medium text-primary">All Components</p>
         <h1 className="mb-4 text-3xl font-semibold tracking-tight">
-          150 Premium Blocks
+          200 Premium Blocks
         </h1>
         <p className="max-w-2xl text-muted-foreground">
           Browse all components organized by category. Each block includes

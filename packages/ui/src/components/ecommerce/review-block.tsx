@@ -173,7 +173,7 @@ export function ReviewBlock({
             <DistributionBar
               key={key}
               label={key}
-              count={distribution[key]}
+              count={distribution[key] ?? 0}
               max={maxCount}
               index={idx}
             />

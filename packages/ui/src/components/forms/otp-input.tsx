@@ -116,7 +116,7 @@ export function OtpInput({
 
       const newDigits = [...digits];
       for (let i = 0; i < pasted.length; i++) {
-        newDigits[i] = pasted[i];
+        newDigits[i] = pasted[i] ?? '';
       }
       setDigits(newDigits);
 

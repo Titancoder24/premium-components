@@ -122,7 +122,7 @@ export const TerminalEmulator: React.FC<TerminalEmulatorProps> = ({
       if (history.length === 0) return;
       const nextIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
       setHistoryIndex(nextIndex);
-      setInput(history[nextIndex]);
+      setInput(history[nextIndex] ?? '');
     }
 
     if (e.key === 'ArrowDown') {
@@ -134,7 +134,7 @@ export const TerminalEmulator: React.FC<TerminalEmulatorProps> = ({
         setInput('');
       } else {
         setHistoryIndex(nextIndex);
-        setInput(history[nextIndex]);
+        setInput(history[nextIndex] ?? '');
       }
     }
   };

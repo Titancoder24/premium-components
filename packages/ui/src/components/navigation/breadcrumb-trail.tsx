@@ -97,7 +97,7 @@ export function BreadcrumbTrail({
             // After the first item, insert ellipsis if collapsing
             if (shouldCollapse && index === 1) {
               return (
-                <React.Fragment key={`${item.label}-${index}`}>
+                <React.Fragment key={`${item!.label}-${index}`}>
                   <motion.li
                     key="ellipsis"
                     initial={{ opacity: 0 }}
@@ -143,12 +143,12 @@ export function BreadcrumbTrail({
                       </AnimatePresence>
                     </div>
                   </motion.li>
-                  {renderItem(item, index + 1, isLast)}
+                  {renderItem(item!, index + 1, isLast)}
                 </React.Fragment>
               )
             }
 
-            return renderItem(item, shouldCollapse && index > 1 ? index + 1 : index, isLast)
+            return renderItem(item!, shouldCollapse && index > 1 ? index + 1 : index, isLast)
           })}
         </AnimatePresence>
       </ol>

@@ -204,7 +204,7 @@ export const DeploymentPipeline: React.FC<DeploymentPipelineProps> = ({
             <React.Fragment key={stage.id}>
               {idx > 0 && (
                 <ConnectorLine
-                  fromStatus={stages[idx - 1].status}
+                  fromStatus={stages[idx - 1]!.status}
                   toStatus={stage.status}
                 />
               )}

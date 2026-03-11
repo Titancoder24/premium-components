@@ -92,7 +92,7 @@ function EntryItem({
   isNew: boolean;
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  const config = typeConfig[entry.type] || typeConfig.feature;
+  const config = (typeConfig[entry.type] ?? typeConfig.feature)!;
   const Icon = config.icon;
   const isLong = entry.description.length > 150;
 

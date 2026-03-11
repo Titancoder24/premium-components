@@ -120,7 +120,7 @@ export function TwoFactorAuth({
 
     const next = [...digits];
     for (let i = 0; i < pasted.length; i++) {
-      next[i] = pasted[i];
+      next[i] = pasted[i]!;
     }
     setDigits(next);
 

@@ -59,7 +59,7 @@ export function CommandPalette({
     const groups: Record<string, Command[]> = {}
     for (const cmd of filtered) {
       if (!groups[cmd.group]) groups[cmd.group] = []
-      groups[cmd.group].push(cmd)
+      groups[cmd.group]!.push(cmd)
     }
     return groups
   }, [filtered])

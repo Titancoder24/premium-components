@@ -76,7 +76,7 @@ function useUndoRedo(initial: Annotation[]) {
   const undo = React.useCallback(() => {
     setState((s) => {
       if (s.past.length === 0) return s;
-      const previous = s.past[s.past.length - 1];
+      const previous = s.past[s.past.length - 1]!;
       return {
         past: s.past.slice(0, -1),
         present: previous,
@@ -88,7 +88,7 @@ function useUndoRedo(initial: Annotation[]) {
   const redo = React.useCallback(() => {
     setState((s) => {
       if (s.future.length === 0) return s;
-      const next = s.future[0];
+      const next = s.future[0]!;
       return {
         past: [...s.past, s.present],
         present: next,

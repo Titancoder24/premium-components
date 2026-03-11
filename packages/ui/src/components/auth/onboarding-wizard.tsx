@@ -76,7 +76,7 @@ export function OnboardingWizard({
   const [completed, setCompleted] = React.useState(false);
 
   const isLastStep = currentStep === steps.length - 1;
-  const step = steps[currentStep];
+  const step = steps[currentStep]!;
 
   const goNext = () => {
     if (isLastStep) {

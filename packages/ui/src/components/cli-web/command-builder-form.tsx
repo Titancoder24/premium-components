@@ -70,7 +70,7 @@ function buildCommand(
     if (flag.type === 'boolean' && boolFlags[flag.name]) {
       parts.push(`--${flag.name}`);
     } else if (flag.type !== 'boolean' && optionValues[flag.name]) {
-      const val = optionValues[flag.name];
+      const val = optionValues[flag.name]!;
       parts.push(val.includes(' ') ? `--${flag.name}="${val}"` : `--${flag.name}=${val}`);
     }
   }

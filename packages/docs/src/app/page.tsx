@@ -89,6 +89,36 @@ const categories = [
     count: 10,
     href: '/components/cli-web',
   },
+  {
+    title: 'Collaboration & Social',
+    description: 'Comment threads, @mentions, presence indicators, reactions, polls, and collaborative editing',
+    count: 10,
+    href: '/components/collaboration',
+  },
+  {
+    title: 'Media & File Management',
+    description: 'Image croppers, video players, file browsers, media grids, and upload progress tracking',
+    count: 10,
+    href: '/components/media',
+  },
+  {
+    title: 'Scheduling & Calendar',
+    description: 'Month calendars, week planners, availability pickers, countdown timers, and Gantt rows',
+    count: 10,
+    href: '/components/scheduling',
+  },
+  {
+    title: 'Maps & Location',
+    description: 'Location pickers, address autocomplete, delivery trackers, geofence editors, and ETA cards',
+    count: 10,
+    href: '/components/maps',
+  },
+  {
+    title: 'Messaging & Notifications',
+    description: 'Inbox panels, email composers, SMS previews, broadcast tools, and notification preferences',
+    count: 10,
+    href: '/components/messaging',
+  },
 ]
 
 export default function HomePage() {
@@ -105,7 +135,7 @@ export default function HomePage() {
         <p className="max-w-2xl text-lg text-muted-foreground">
           Premium UI Blocks are based on real-world situations. Find inspiration
           for your next dashboard by using our carefully crafted blocks.
-          150 components, 55 themes, full MCP protocol support.
+          200 components, 55 themes, full MCP protocol support.
         </p>
       </div>
 
@@ -178,7 +208,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mt-20 border-t border-border pt-8">
-        <div className="grid gap-8 text-sm sm:grid-cols-5">
+        <div className="grid gap-8 text-sm sm:grid-cols-5 lg:grid-cols-5">
           <div>
             <h4 className="mb-3 font-semibold text-foreground">Charts & Analytics</h4>
             <ul className="space-y-2 text-muted-foreground">
@@ -227,6 +257,46 @@ export default function HomePage() {
               <li>MCP Server Status</li>
               <li>Agent Chat</li>
               <li>Cron Editor</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground">Collaboration</h4>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>Comment Thread</li>
+              <li>Mention Input</li>
+              <li>Reaction Picker</li>
+              <li>Voting Poll</li>
+              <li>Live Badge</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground">Media & Files</h4>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>Image Cropper</li>
+              <li>Video Player</li>
+              <li>File Browser</li>
+              <li>Media Grid</li>
+              <li>Audio Waveform</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground">Scheduling</h4>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>Month Calendar</li>
+              <li>Week Planner</li>
+              <li>Countdown Timer</li>
+              <li>Gantt Row</li>
+              <li>Availability Picker</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground">Maps & Messaging</h4>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>Location Picker</li>
+              <li>Delivery Tracker</li>
+              <li>Inbox Panel</li>
+              <li>Email Composer</li>
+              <li>ETA Card</li>
             </ul>
           </div>
         </div>

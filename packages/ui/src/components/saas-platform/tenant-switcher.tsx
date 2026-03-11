@@ -183,7 +183,7 @@ export function TenantSwitcher({
       case 'Enter':
         e.preventDefault();
         if (focusedIndex >= 0 && focusedIndex < filtered.length) {
-          handleSwitch(filtered[focusedIndex].id);
+          handleSwitch(filtered[focusedIndex]!.id);
         }
         break;
       case 'Escape':

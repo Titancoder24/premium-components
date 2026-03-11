@@ -72,7 +72,7 @@ export function VirtualList<T = unknown>({
   const visibleItems = React.useMemo(() => {
     const result: { item: T; index: number }[] = []
     for (let i = startIndex; i <= endIndex; i++) {
-      result.push({ item: items[i], index: i })
+      result.push({ item: items[i]!, index: i })
     }
     return result
   }, [items, startIndex, endIndex])

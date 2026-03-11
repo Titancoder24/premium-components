@@ -76,13 +76,13 @@ export function TagMultiSelect({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Backspace" && query === "" && value.length > 0) {
-        removeTag(value[value.length - 1]);
+        removeTag(value[value.length - 1]!);
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (canCreate) {
           addTag(query.trim());
         } else if (filteredOptions.length > 0) {
-          addTag(filteredOptions[0].value);
+          addTag(filteredOptions[0]!.value);
         }
       } else if (e.key === "Escape") {
         setIsOpen(false);

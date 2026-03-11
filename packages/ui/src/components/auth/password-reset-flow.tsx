@@ -65,7 +65,7 @@ function getPasswordStrength(password: string): StrengthResult {
     4: { label: 'Strong', color: 'var(--color-success, #22c55e)' },
   };
 
-  return { score: rounded, ...levels[rounded] };
+  return { score: rounded, ...levels[rounded]! };
 }
 
 // ---------------------------------------------------------------------------
